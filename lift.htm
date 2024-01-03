@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lift</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/2df1c6fd57.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: rgb(109, 243, 198);
+        }
+
+        .header {
+            border: 2px solid red;
+            background-color: black;
+            height: 7vh;
+            width: 30%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+        }
+
+        .liftArea {
+            border: 2px solid rgb(0, 110, 255);
+            background-color: rgb(0, 110, 255);
+            height: 60vh;
+            width: 30%;
+            margin: 10px auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .door {
+            position: absolute;
+            background-color: rgb(41, 42, 43);
+            width: 50%;
+            height: 100%;
+        }
+
+        .door2 {
+            position: absolute;
+            background-color: rgb(41, 42, 43);
+            width: 50%;
+            height: 100%;
+            left: 51%;
+        }
+
+        .buttons {
+            width: 30%;
+            margin: 10px auto;
+            height: 10vh;
+        }
+
+        h2 {
+            color: red;
+            text-align: center;
+            margin: 10px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button {
+            border: 2px solid red;
+            color: red;
+            background-color: black;
+            padding: 20px 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+
+        span {
+            margin: 0 20px;
+            color: grey;
+            font-size: 25px;
+            margin-top: 10px;
+        }
+
+        .active {
+            color: rgb(145, 255, 0);
+            border-color: rgb(145, 255, 0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <span class="arrow1 symbol"><i class="fa-solid fa-up-long"></i></span>
+        <h2 class="heading">Ground Floor </h2>
+        <span class="arrow2 symbol"><i class="fa-solid fa-down-long"></i></span>
+    </div>
+
+    <div class="liftArea">
+        <div class="door1 door"></div>
+        <div class="door2 door"></div>
+    </div>
+
+    <div class="buttons">
+        <button>0</button>
+        <button>1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>4</button>
+    </div>
+
+    <script>
+        $('.arrow1').css('color', 'grey');
+
+        const array = [];
+        topFloor = 4;
+        current = 0;
+        direction = 'Up'
+        $('button').click(async function (event) {
+
+            pressedButton = (Number)($(this).text());
+
+            if (array.indexOf(pressedButton) > -1) {
+                return;
+            }
+
+            console.log(direction)
+            array.push(pressedButton);
+            $(this).addClass('active');
+            console.log(array);
+            if (array.length == 1) {
+                processList();
+            }
+
+        });
+
+        async function processList() {
+            if (array.length) {
+                if (current > array[0]) {
+                    direction = 'Down';
+                }
+                else if (current == array[0]) {
+                    await openingDoor(current);
+                    afterOpening(current);
+                }
+                else {
+                    direction = 'Up';
+                }
+
+                moveLift(array[0]);
+            }
+        }
+        function staticArrows() {
+            $('span').css('color', 'grey');
+        }
+        async function moveLift(destinationFloor) {
+
+            let found = 0;
+            let i;
+
+            if (direction == 'Up') {
+                for (i = current + 1; i <= destinationFloor; i++) {
+                    await movingTime(i);
+
+                    if (array.indexOf(i) > -1) {
+                        found = 1;
+                        break;
+                    }
+
+                }
+
+            }
+            else {
+                for (i = current + 1; i >= destinationFloor; i--) {
+                    await movingTime(i);
+
+                    if (array.indexOf(i) > -1) {
+                        found = 1;
+                        break;
+                    }
+
+                }
+            }
+            if (found) {
+                await afterOpening(i);
+            }
+
+        }
+        async function afterOpening(i) {
+            staticArrows();
+            await openingDoor(i);
+            $('.heading').text(current);
+        }
+
+
+        async function openingDoor(i) {
+            $('.heading').text(`Opening Floor -> ${current}`);
+            $('.door1').css({
+                'transform': 'translateX(-48%)',
+                'transition': 'transform 1s ease'
+            });
+            $('.door2').css({
+                'transform': 'translateX(48%)',
+                'transition': 'transform 1s ease'
+            });
+            current = i;
+            $('.heading').text(`Opening Floor -> ${current}`);
+            await openingTime(3);
+            closingDoor();
+        }
+
+        async function closingDoor(i) {
+            $('.door1').css({
+                'transform': 'translateX(0)',
+                'transition': 'transform 1s ease'
+            });
+            $('.door2').css({
+                'transform': 'translateX(0)',
+                'transition': 'transform 1s ease'
+            });
+            console.log('before', array.length);
+            let index = array.indexOf(current);
+            array.splice(index, 1);//..............
+            $($('button')[current]).removeClass('active');
+            console.log('after', array.length);
+            await closingTime(3);
+            $('span').show();
+            processList();
+        }
+
+        function openingTime() {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    console.log('opning time');
+                    resolve();
+                }, 3000);
+            });
+        }
+
+        function closingTime() {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            });
+        }
+
+        function movingTime(i) {
+            if (direction == 'Down') {
+                $('.arrow1').css('color', 'grey');
+                $('.arrow2').css('color', 'red');
+            }
+            else {
+                $('.arrow2').css('color', 'grey');
+                $('.arrow1').css('color', 'red');
+            }
+            return new Promise(resolve => {
+                console.log('Current', current);
+                $('.heading').text(`Floor ${i}`);
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            });
+        }
+
+    </script>
+
+
+</body>
+
+</html>
